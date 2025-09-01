@@ -176,7 +176,11 @@ def main():
     st.sidebar.header("Settings")
     # Keep Rule-based as default to avoid accidental Gemini usage when no key is present
     mode = st.sidebar.selectbox("Mode", ["Gemini (Google)", "Rule-based (FAQ)"], index=1)
-    gemini_model = st.sidebar.text_input("Gemini model", value="gemini-2.5-flash")
+    gemini_model = st.sidebar.selectbox(
+        "Gemini model",
+        ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash"],
+        index=0
+    )
     temp = 0.2
 
     st.sidebar.markdown("**FAQs that are handled by Rule-based**")
@@ -232,3 +236,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
