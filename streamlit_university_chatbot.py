@@ -49,7 +49,7 @@ def normalize_key(k: str | None) -> str | None:
     return k
 
 
-def detect_gemini_key(sidebar_key: str | None) -> (str | None, str | None):
+def detect_gemini_key(sidebar_key: str | None) -> (str | None):
     """Return (effective_key, source_label) -- source_label is one of st.secrets, sidebar, env, none."""
     effective = None
     source = None
@@ -245,5 +245,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
