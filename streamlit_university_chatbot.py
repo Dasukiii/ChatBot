@@ -196,7 +196,6 @@ def main():
         st.sidebar.write(f"- {e['q']}")
 
     st.sidebar.markdown("---")
-    st.sidebar.markdown("Tips: If you don't have an API key or the SDK installed, choose Rule-based (FAQ). To install the SDK: `pip install google-generativeai`.")
 
     if 'history' not in st.session_state:
         st.session_state['history'] = []
@@ -245,6 +244,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
