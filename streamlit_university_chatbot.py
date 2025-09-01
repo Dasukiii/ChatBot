@@ -88,7 +88,9 @@ def call_gemini(question: str, api_key: str | None, model: str = "gemini-2.5-fla
     if not key:
         return "(Gemini not configured) No Gemini API key found. Provide GEMINI_API_KEY/GOOGLE_API_KEY as a Streamlit secret, env var, or paste key in the sidebar."
 
-    # Attempt multiple SDK import patterns. Return the first successful response, or useful error info.
+    # Try multiple SDK import patterns. Collect errors and return a clear fallback if none succeed.
+    last_errors: list[str] = []
+
     # Pattern A: from google import genai
     try:
         from google import genai  # type: ignore
@@ -100,8 +102,9 @@ def call_gemini(question: str, api_key: str | None, model: str = "gemini-2.5-fla
                 try:
                     genai.configure(api_key=key)
                     client = genai.Client()
-                except Exception:
+                except Exception as e:
                     client = None
+                    last_errors.append(f"genai client init failed: {e}")
             if client is not None:
                 resp = client.models.generate_content(model=model, contents=question)
                 if hasattr(resp, "text"):
@@ -114,9 +117,9 @@ def call_gemini(question: str, api_key: str | None, model: str = "gemini-2.5-fla
                         return "\n".join(texts)
                 return str(resp)
         except Exception as e:
-            return f"(Gemini request failed - genai.Client pattern) {e}"
-    except Exception:
-        pass
+            last_errors.append(f"genai.Client pattern runtime error: {e}")
+    except Exception as e:
+        last_errors.append(f"genai import not available: {e}")
 
     # Pattern B: import google.generativeai as genai
     try:
@@ -125,8 +128,9 @@ def call_gemini(question: str, api_key: str | None, model: str = "gemini-2.5-fla
             if hasattr(genai2, "configure"):
                 try:
                     genai2.configure(api_key=key)
-                except Exception:
-                    pass
+                except Exception as e:
+                    # keep going; configure may not be required or may raise
+                    last_errors.append(f"genai2.configure warning: {e}")
             if hasattr(genai2, "generate_text"):
                 resp = genai2.generate_text(model=model, input=question, temperature=temperature)
                 if isinstance(resp, str):
@@ -144,9 +148,10 @@ def call_gemini(question: str, api_key: str | None, model: str = "gemini-2.5-fla
                     return str(chat_resp.get("output") or chat_resp)
                 return str(chat_resp)
         except Exception as e:
-            return f"(Gemini request failed - google.generativeai pattern) {e}"
-    except Exception:
-        pass
+            last_errors.append(f"google.generativeai runtime error: {e}")
+    except Exception as e:
+        last_errors.append(f"google.generativeai import not available: {e}")
+
 
     # Pattern C: google.ai.generativelanguage (TextServiceClient)
     # try:
@@ -162,8 +167,14 @@ def call_gemini(question: str, api_key: str | None, model: str = "gemini-2.5-fla
     # except Exception:
     #     pass
 
-    # return "(Gemini client not found) Could not find a supported Gemini/GenAI Python package. Install google-generativeai (or another official Gen AI SDK) and set GEMINI_API_KEY/GOOGLE_API_KEY."
+    error_details = "; ".join(last_errors) if last_errors else "no details available"
 
+    return (
+        "(Gemini client not found) Could not find a supported Gemini/GenAI Python package "
+        "or all client attempts failed. To enable Gemini in this app: `pip install google-generativeai` "
+        "and set GEMINI_API_KEY or GOOGLE_API_KEY (Streamlit secrets or env). "
+        f"Details: {error_details}"
+    )
 
 def main():
     st.set_page_config(page_title="UniLife Q&A Bot (Gemini)", layout="centered")
@@ -175,7 +186,7 @@ def main():
     )
 
     st.sidebar.header("Settings")
-    mode = st.sidebar.selectbox("Mode", ["Gemini (Google)", "Rule-based (FAQ)"])
+    mode = st.sidebar.selectbox("Mode", ["Gemini (Google)", "Rule-based (FAQ)"], index=1)
     gemini_api_key = st.sidebar.text_input("Gemini API Key (optional)", type="password")
     gemini_model = st.sidebar.text_input("Gemini model", value="gemini-2.5-flash")
     temp = st.sidebar.slider("Temperature", min_value=0.0, max_value=1.0, value=0.2)
@@ -234,4 +245,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
