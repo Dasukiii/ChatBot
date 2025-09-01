@@ -214,7 +214,7 @@ def main():
         st.session_state['history'].append({"user": user_q, "bot": answer})
         st.session_state['user_input'] = ""
 
-    st.button("Ask", on_click=handle_ask, args=(mode, gemini_api_key, gemini_model, temp))
+    st.button("Ask", on_click=handle_ask, args=(mode, gemini_api_key, gemini_model))
 
     st.subheader("Conversation")
     if not st.session_state['history']:
@@ -243,6 +243,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
