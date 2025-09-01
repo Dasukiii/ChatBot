@@ -1,0 +1,11 @@
+# requirements for the UniLife Streamlit chatbot (Gemini)
+# Save this as requirements.txt at the repo root.
+
+streamlit>=1.20.0
+google-generativeai>=0.2.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+
+# Optional (dev/test) - uncomment if you use them locally
+# pytest>=7.0
+# black
