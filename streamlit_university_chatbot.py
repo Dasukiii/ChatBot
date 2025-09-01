@@ -189,7 +189,8 @@ def main():
     mode = st.sidebar.selectbox("Mode", ["Gemini (Google)", "Rule-based (FAQ)"], index=1)
     gemini_api_key = st.sidebar.text_input("Gemini API Key (optional)", type="password")
     gemini_model = st.sidebar.text_input("Gemini model", value="gemini-2.5-flash")
-
+    temp = 0.2
+    
     st.sidebar.markdown("**FAQs that are handled by Rule-based**")
     for e in CUSTOM_KB:
         st.sidebar.write(f"- {e['q']}")
@@ -208,13 +209,13 @@ def main():
         if not user_q:
             return
         if mode_value == "Gemini (Google)":
-            answer = call_gemini(user_q, api_key=api_key_value or None, model=model_value or "gemini-2.5-flash", temperature=0.2)
+            answer = call_gemini(user_q, api_key=api_key_value or None, model=model_value or "gemini-2.5-flash", temperature=temperature_value)
         else:
             answer = get_rule_based_answer(user_q)
         st.session_state['history'].append({"user": user_q, "bot": answer})
         st.session_state['user_input'] = ""
 
-    st.button("Ask", on_click=handle_ask, args=(mode, gemini_api_key, gemini_model))
+    st.button("Ask", on_click=handle_ask, args=(mode, gemini_api_key, gemini_model, temp))
 
     st.subheader("Conversation")
     if not st.session_state['history']:
