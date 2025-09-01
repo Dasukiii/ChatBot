@@ -177,17 +177,16 @@ def call_gemini(question: str, api_key: str | None, model: str = "gemini-2.5-fla
     )
 
 def main():
-    st.set_page_config(page_title="UniLife Q&A Bot (Gemini)", layout="centered")
-    st.title("🎓 UniLife — Student Q&A Chatbot (Gemini)")
+    st.set_page_config(page_title="UniLife Q&A Bot", layout="centered")
+    st.title("🎓 UniLife — Student Q&A Chatbot")
 
     st.markdown(
         "Ask questions about university life (library, exams, scholarships, IT help, etc.).\n\n"
-        "This app supports a rule-based FAQ and an optional Google Gemini integration (if you provide an API key and have the SDK installed)."
+        "This app supports a rule-based FAQ and a Google Gemini integration."
     )
 
     st.sidebar.header("Settings")
     mode = st.sidebar.selectbox("Mode", ["Gemini (Google)", "Rule-based (FAQ)"], index=1)
-    gemini_api_key = st.sidebar.text_input("Gemini API Key (optional)", type="password")
     gemini_model = st.sidebar.text_input("Gemini model", value="gemini-2.5-flash")
     temp = 0.2
     
@@ -239,11 +238,11 @@ def main():
             st.write("")
 
     st.markdown("---")
-    st.markdown("**Developer notes:** For Streamlit Cloud: add GEMINI_API_KEY to app Secrets. Avoid pasting API keys on public/shared machines.")
 
 
 if __name__ == '__main__':
     main()
+
 
 
 
