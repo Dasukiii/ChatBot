@@ -187,6 +187,7 @@ def main():
 
     st.sidebar.header("Settings")
     mode = st.sidebar.selectbox("Mode", ["Gemini (Google)", "Rule-based (FAQ)"], index=1)
+    gemini_api_key = st.sidebar.text_input("Gemini API Key (optional)", type="password")
     gemini_model = st.sidebar.text_input("Gemini model", value="gemini-2.5-flash")
     temp = 0.2
     
@@ -242,6 +243,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
