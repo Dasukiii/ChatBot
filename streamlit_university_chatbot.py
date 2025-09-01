@@ -189,9 +189,8 @@ def main():
     mode = st.sidebar.selectbox("Mode", ["Gemini (Google)", "Rule-based (FAQ)"], index=1)
     gemini_api_key = st.sidebar.text_input("Gemini API Key (optional)", type="password")
     gemini_model = st.sidebar.text_input("Gemini model", value="gemini-2.5-flash")
-    temp = st.sidebar.slider("Temperature", min_value=0.0, max_value=1.0, value=0.2)
 
-    st.sidebar.markdown("**Custom knowledge - included in the model prompt (used by AI):**")
+    st.sidebar.markdown("**FAQs that are handled by Rule-based**")
     for e in CUSTOM_KB:
         st.sidebar.write(f"- {e['q']}")
 
@@ -209,7 +208,7 @@ def main():
         if not user_q:
             return
         if mode_value == "Gemini (Google)":
-            answer = call_gemini(user_q, api_key=api_key_value or None, model=model_value or "gemini-2.5-flash", temperature=temperature_value)
+            answer = call_gemini(user_q, api_key=api_key_value or None, model=model_value or "gemini-2.5-flash", temperature=0.2)
         else:
             answer = get_rule_based_answer(user_q)
         st.session_state['history'].append({"user": user_q, "bot": answer})
@@ -244,6 +243,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
