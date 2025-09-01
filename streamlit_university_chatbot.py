@@ -3,10 +3,10 @@ import os
 from typing import List, Dict
 
 # ---------------------------
-# Fixed UniLife Q&A Chatbot (Streamlit) - Gemini-ready
-# - Prefers Streamlit secrets for GEMINI_API_KEY
+# UniLife Q&A Chatbot (Streamlit) - Gemini-ready (no sidebar API input)
+# - Looks for GEMINI_API_KEY / GOOGLE_API_KEY in st.secrets or environment
 # - Robust detection of several Gemini/GenAI SDK import patterns
-# - Shows a non-secret key source indicator in the sidebar
+# - Shows a non-sensitive key source indicator in the sidebar
 # - Rule-based FAQ fallback
 # ---------------------------
 
@@ -37,8 +37,7 @@ def get_rule_based_answer(question: str) -> str:
     for k, a in FAQ_KEYWORDS.items():
         if k in q:
             return a
-    return "I don't have a precise answer in my FAQ. Try rephrasing the question or provide a Gemini API key in the sidebar to enable AI-powered answers."
-
+    return "I don't have a precise answer in my FAQ. Try rephrasing the question. To enable AI-powered answers, set GEMINI_API_KEY or GOOGLE_API_KEY in Streamlit secrets or the environment."
 
 def normalize_key(k: str | None) -> str | None:
     if not k:
@@ -49,8 +48,13 @@ def normalize_key(k: str | None) -> str | None:
     return k
 
 
-def detect_gemini_key(sidebar_key: str | None) -> (str | None):
-    """Return (effective_key, source_label) -- source_label is one of st.secrets, sidebar, env, none."""
+def detect_gemini_key() -> (str | None, str | None):
+    """
+    Return (effective_key, source_label) where source_label is one of:
+      - "st.secrets" if found in Streamlit secrets
+      - "env" if found in environment variables
+      - None if not found
+    """
     effective = None
     source = None
     try:
@@ -63,30 +67,29 @@ def detect_gemini_key(sidebar_key: str | None) -> (str | None):
                 source = "st.secrets"
     except Exception:
         pass
-    if not effective and sidebar_key:
-        effective = sidebar_key
-        source = "sidebar"
+
     if not effective:
         effective = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         if effective:
             source = "env"
+
     effective = normalize_key(effective)
     return effective, source
 
 
-def call_gemini(question: str, api_key: str | None, model: str = "gemini-2.5-flash", temperature: float = 0.2) -> str:
-    key, source = detect_gemini_key(api_key)
+def call_gemini(question: str, model: str = "gemini-2.5-flash", temperature: float = 0.2) -> str:
+    key, source = detect_gemini_key()
     # Provide a non-sensitive indicator in the sidebar
     try:
         if source:
             st.sidebar.info(f"Gemini key source: {source}")
         else:
-            st.sidebar.warning("Gemini key not found (set st.secrets or env or paste in sidebar)")
+            st.sidebar.warning("Gemini key not found. Set GEMINI_API_KEY/GOOGLE_API_KEY in Streamlit secrets or environment.")
     except Exception:
         pass
 
     if not key:
-        return "(Gemini not configured) No Gemini API key found. Provide GEMINI_API_KEY/GOOGLE_API_KEY as a Streamlit secret, env var, or paste key in the sidebar."
+        return "(Gemini not configured) No Gemini API key found. Set GEMINI_API_KEY or GOOGLE_API_KEY in Streamlit secrets or environment variables."
 
     # Try multiple SDK import patterns. Collect errors and return a clear fallback if none succeed.
     last_errors: list[str] = []
@@ -129,7 +132,6 @@ def call_gemini(question: str, api_key: str | None, model: str = "gemini-2.5-fla
                 try:
                     genai2.configure(api_key=key)
                 except Exception as e:
-                    # keep going; configure may not be required or may raise
                     last_errors.append(f"genai2.configure warning: {e}")
             if hasattr(genai2, "generate_text"):
                 resp = genai2.generate_text(model=model, input=question, temperature=temperature)
@@ -152,29 +154,15 @@ def call_gemini(question: str, api_key: str | None, model: str = "gemini-2.5-fla
     except Exception as e:
         last_errors.append(f"google.generativeai import not available: {e}")
 
-
-    # Pattern C: google.ai.generativelanguage (TextServiceClient)
-    # try:
-    #     from google.ai import generativelanguage as gal  # type: ignore
-    #     try:
-    #         client = gal.TextServiceClient()
-    #         if hasattr(client, "generate_text"):
-    #             # This is a best-effort call; the exact request object may vary by version
-    #             resp = client.generate_text(model=model, prompt=question)
-    #             return str(resp)
-    #     except Exception as e:
-    #         return f"(Gemini request failed - google.ai.generativelanguage pattern) {e}"
-    # except Exception:
-    #     pass
-
+    # Final fallback with collected details
     error_details = "; ".join(last_errors) if last_errors else "no details available"
-
     return (
         "(Gemini client not found) Could not find a supported Gemini/GenAI Python package "
         "or all client attempts failed. To enable Gemini in this app: `pip install google-generativeai` "
-        "and set GEMINI_API_KEY or GOOGLE_API_KEY (Streamlit secrets or env). "
+        "and set GEMINI_API_KEY or GOOGLE_API_KEY in Streamlit secrets or environment variables. "
         f"Details: {error_details}"
     )
+
 
 def main():
     st.set_page_config(page_title="UniLife Q&A Bot", layout="centered")
@@ -182,20 +170,21 @@ def main():
 
     st.markdown(
         "Ask questions about university life (library, exams, scholarships, IT help, etc.).\n\n"
-        "This app supports a rule-based FAQ and a Google Gemini integration."
+        "This app supports a rule-based FAQ and a Google Gemini integration (using keys from Streamlit secrets or environment variables)."
     )
 
     st.sidebar.header("Settings")
+    # Keep Rule-based as default to avoid accidental Gemini usage when no key is present
     mode = st.sidebar.selectbox("Mode", ["Gemini (Google)", "Rule-based (FAQ)"], index=1)
-    gemini_api_key = st.sidebar.text_input("Gemini API Key (optional)", type="password")
     gemini_model = st.sidebar.text_input("Gemini model", value="gemini-2.5-flash")
     temp = 0.2
-    
+
     st.sidebar.markdown("**FAQs that are handled by Rule-based**")
     for e in CUSTOM_KB:
         st.sidebar.write(f"- {e['q']}")
 
     st.sidebar.markdown("---")
+    st.sidebar.markdown("Tip: Store `GEMINI_API_KEY` or `GOOGLE_API_KEY` in Streamlit Secrets or set it in the environment. Do not paste keys into public/shared UIs.")
 
     if 'history' not in st.session_state:
         st.session_state['history'] = []
@@ -204,18 +193,18 @@ def main():
 
     st.text_input("Type your question here", key="user_input")
 
-    def handle_ask(mode_value, api_key_value, model_value, temperature_value):
+    def handle_ask(mode_value, model_value, temperature_value):
         user_q = st.session_state.get('user_input', "").strip()
         if not user_q:
             return
         if mode_value == "Gemini (Google)":
-            answer = call_gemini(user_q, api_key=api_key_value or None, model=model_value or "gemini-2.5-flash", temperature=temperature_value)
+            answer = call_gemini(user_q, model=model_value or "gemini-2.5-flash", temperature=temperature_value)
         else:
             answer = get_rule_based_answer(user_q)
         st.session_state['history'].append({"user": user_q, "bot": answer})
         st.session_state['user_input'] = ""
 
-    st.button("Ask", on_click=handle_ask, args=(mode, gemini_api_key, gemini_model, temp))
+    st.button("Ask", on_click=handle_ask, args=(mode, gemini_model, temp))
 
     st.subheader("Conversation")
     if not st.session_state['history']:
@@ -243,11 +232,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-
-
