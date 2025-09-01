@@ -95,7 +95,7 @@ def call_gemini(question: str, api_key: str | None, model: str = "gemini-2.5-fla
         # Configure client via environment or explicit configure if available
         try:
             # newer genai Client() pattern
-            client = genai.Client(api_key="AIzaSyCodJq_Oj2lTgW7xrpEGXc8DFR41lZQydI")
+            client = genai.Client()
         except Exception:
             # older configure pattern
             try:
@@ -263,3 +263,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
