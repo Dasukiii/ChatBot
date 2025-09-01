@@ -149,20 +149,20 @@ def call_gemini(question: str, api_key: str | None, model: str = "gemini-2.5-fla
         pass
 
     # Pattern C: google.ai.generativelanguage (TextServiceClient)
-    try:
-        from google.ai import generativelanguage as gal  # type: ignore
-        try:
-            client = gal.TextServiceClient()
-            if hasattr(client, "generate_text"):
-                # This is a best-effort call; the exact request object may vary by version
-                resp = client.generate_text(model=model, prompt=question)
-                return str(resp)
-        except Exception as e:
-            return f"(Gemini request failed - google.ai.generativelanguage pattern) {e}"
-    except Exception:
-        pass
+    # try:
+    #     from google.ai import generativelanguage as gal  # type: ignore
+    #     try:
+    #         client = gal.TextServiceClient()
+    #         if hasattr(client, "generate_text"):
+    #             # This is a best-effort call; the exact request object may vary by version
+    #             resp = client.generate_text(model=model, prompt=question)
+    #             return str(resp)
+    #     except Exception as e:
+    #         return f"(Gemini request failed - google.ai.generativelanguage pattern) {e}"
+    # except Exception:
+    #     pass
 
-    return "(Gemini client not found) Could not find a supported Gemini/GenAI Python package. Install google-generativeai (or another official Gen AI SDK) and set GEMINI_API_KEY/GOOGLE_API_KEY."
+    # return "(Gemini client not found) Could not find a supported Gemini/GenAI Python package. Install google-generativeai (or another official Gen AI SDK) and set GEMINI_API_KEY/GOOGLE_API_KEY."
 
 
 def main():
@@ -234,3 +234,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
