@@ -170,7 +170,7 @@ def main():
 
     st.markdown(
         "Ask questions about university life (library, exams, scholarships, IT help, etc.).\n\n"
-        "This app supports a rule-based FAQ and a Google Gemini integration (using keys from Streamlit secrets or environment variables)."
+        "This app supports a rule-based FAQ and a Google Gemini integration."
     )
 
     st.sidebar.header("Settings")
@@ -188,7 +188,7 @@ def main():
         st.sidebar.write(f"- {e['q']}")
 
     st.sidebar.markdown("---")
-    st.sidebar.markdown("Tip: Store `GEMINI_API_KEY` or `GOOGLE_API_KEY` in Streamlit Secrets or set it in the environment. Do not paste keys into public/shared UIs.")
+    st.sidebar.markdown("Tip: Store `GEMINI_API_KEY` or `GOOGLE_API_KEY` in Streamlit Secrets or set it in the environment.")
 
     if 'history' not in st.session_state:
         st.session_state['history'] = []
@@ -236,6 +236,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
